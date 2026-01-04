@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>장르별 비트 & 멜로디 시퀀서 – Beatbot Final</title>
+  <style>
+
+/* 스텝 번호 헤더용 */
+.step-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.step-header .row-label {
+  width: 60px;
+  font-size: 0.65rem;
+  text-align: right;
+  padding-right: 0.4rem;
+  opacity: 0.4;
+}
+
+.step-number {
+  width: 22px;
+  height: 14px;
+  margin: 2px;
+  font-size: 0.6rem;
+  color: #9ca3af;
+  text-align: center;
+  line-height: 14px;
+}
+
+
+
+
+
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050510;
+      color: #f7f7ff;
+    }
+
+    h1 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1.4rem;
+    }
+    p {
+      margin: 0 0 1rem 0;
+      font-size: 0.85rem;
+      opacity: 0.75;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #8b5cf6;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+      white-space: nowrap;
+    }
+    button.secondary {
+      background: #27272f;
+      box-shadow: none;
+    }
+    button:hover {
+      filter: brightness(1.08);
+    }
+
+    label {
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #11111b;
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+    }
+    input[type="range"] {
+      accent-color: #8b5cf6;
+    }
+    select {
+      background: #11111b;
+      border-radius: 999px;
+      border: 1px solid #27272f;
+      color: #f7f7ff;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    .section-title {
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .grid-wrapper {
+      border-radius: 0.75rem;
+      background: #090916;
+      padding: 0.6rem;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+
+    .grid {
+      display: inline-block;
+      border-collapse: collapse;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+    }
+
+    .row-label {
+      width: 60px;
+      font-size: 0.7rem;
+      text-align: right;
+      padding-right: 0.4rem;
+      opacity: 0.6;
+    }
+
+    .cell-row {
+      display: flex;
+    }
+
+    .cell {
+      width: 22px;
+      height: 22px;
+      margin: 2px;
+      border-radius: 6px;
+      background: #171727;
+      box-shadow: inset 0 0 0 1px #202030;
+      cursor: pointer;
+      transition: background 0.1s, box-shadow 0.1s, transform 0.05s;
+    }
+
+    .cell.active {
+      background: #8b5cf6;
+      box-shadow: 0 0 10px rgba(139,92,246,0.8);
+      transform: translateY(-1px);
+    }
+
+    .cell.playing {
+      outline: 2px solid #facc15;
+    }
+
+    .row.drum-row .cell.active {
+      background: #f97316;
+      box-shadow: 0 0 10px rgba(249,115,22,0.8);
+    }
+
+    .row.bass-row .cell.active {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34,197,94,0.8);
+    }
+
+    .legend {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: 0.2rem;
+    }
+
+    #scale-display {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-bottom: 0.6rem;
+    }
+
+    #harmony-info {
+      font-size: 0.8rem;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <h1>장르별 비트 & 멜로디 시퀀서 🎧 (Beatbot Final)</h1>
+  <p>장르, BPM, 키, 스케일, 코드 진행을 바꾸면서 2마디(32스텝) 패턴을 만들고, 볼륨·저장·불러오기까지 할 수 있습니다.</p>
+
+  <div class="controls">
+    <button id="play-btn">▶ Play</button>
+
+    <label>
+      BPM
+      <input id="bpm" type="range" min="60" max="180" value="148" />
+      <span id="bpm-value">148</span>
+    </label>
+
+    <label>
+      장르
+      <select id="genre-select">
+        <option value="pop">Pop</option>
+        <option value="ballad">Ballad</option>
+        <option value="jazz">Jazz</option>
+        <option value="rap">Rap / Hip-hop</option>
+        <option value="soul">Soul</option>
+        <option value="blues">Blues</option>
+        <option value="rock">Rock</option>
+        <option value="folk">Folk</option>
+      </select>
+    </label>
+
+    <label>
+      Key
+      <select id="key-root">
+        <option value="C">C</option>
+        <option value="D">D</option>
+        <option value="E">E</option>
+        <option value="F">F</option>
+        <option value="G">G</option>
+        <option value="A" selected>A</option>
+        <option value="B">B</option>
+      </select>
+    </label>
+
+    <label>
+      Scale
+      <select id="scale-type">
+        <option value="major">Major</option>
+        <option value="minor" selected>Minor</option>
+        <option value="blues">Blues</option>
+      </select>
+    </label>
+
+    <label>
+      멜로디 악기
+      <select id="instrument-select">
+        <option value="triangle" selected>Soft Triangle</option>
+        <option value="sine">Warm Sine Pad</option>
+        <option value="sawtooth">Saw Lead</option>
+        <option value="square">Square Lead</option>
+        <option value="acoustic">Acoustic Guitar</option>
+        <option value="lead-bass">Lead Bass</option>
+      </select>
+    </label>
+
+    <label>
+      코드 진행
+      <select id="progression-select">
+        <option value="none">직접 입력</option>
+        <option value="pop_1">I - V - vi - IV (Pop)</option>
+        <option value="minor_rock">i - VI - III - VII (Minor Rock/Ballad)</option>
+        <option value="jazz_251">ii - V - I (Jazz)</option>
+        <option value="blues_compact">I - IV - I - V (Blues 2bars)</option>
+      </select>
+    </label>
+
+    <button id="apply-prog-btn" class="secondary">진행 패턴 적용</button>
+
+    <button id="clear-btn" class="secondary">패턴 지우기</button>
+    <button id="save-btn" class="secondary">저장</button>
+    <button id="load-btn" class="secondary">불러오기</button>
+  </div>
+
+  <!-- 볼륨 컨트롤 -->
+  <div class="controls">
+    <label>
+      Vol 마스터
+      <input id="vol-master" type="range" min="-40" max="0" value="-6" />
+    </label>
+    <label>
+      Vol 멜로디
+      <input id="vol-melody" type="range" min="-40" max="0" value="0" />
+    </label>
+    <label>
+      Vol 베이스
+      <input id="vol-bass" type="range" min="-40" max="0" value="-4" />
+    </label>
+    <label>
+      Vol 드럼
+      <input id="vol-drum" type="range" min="-40" max="0" value="-2" />
+    </label>
+  </div>
+
+  <div id="scale-display"></div>
+
+  <div class="section-title">🎼 멜로디 (선택한 Key & Scale)</div>
+  <div class="grid-wrapper">
+    <div id="melody-grid" class="grid"></div>
+    <div class="legend">위로 갈수록 높은 음, 오른쪽으로 갈수록 진행되는 32스텝 (2마디, 16분음표 기준)</div>
+  </div>
+
+  <div class="section-title">🎸 베이스</div>
+  <div class="grid-wrapper">
+    <div id="bass-grid" class="grid"></div>
+    <div class="legend">낮은 음역대 베이스 노트를 입력합니다. (초록색)</div>
+  </div>
+
+  <div class="section-title">🥁 드럼</div>
+  <div class="grid-wrapper">
+    <div id="drum-grid" class="grid"></div>
+    <div class="legend">Kick / Snare / Hi-Hat 패턴을 직접 그리거나, 장르 프리셋을 그대로 들어볼 수 있습니다.</div>
+  </div>
+
+  <div class="section-title">📚 기본 화성(코드) 참고</div>
+  <div id="harmony-info" class="grid-wrapper"></div>
+
+  <!-- Tone.js -->
+  <script src="https://unpkg.com/tone"></script>
+  <script>
+    // ===== 기본 설정 =====
+    const steps = 32;
+    const NUM_MELODY_ROWS = 8;
+
+    // 장르 프리셋
+    const GENRE_PRESETS = {
+      pop:   { bpm: 110, scale: "major", osc: "sawtooth" },
+      ballad:{ bpm: 72,  scale: "minor", osc: "acoustic" },
+      jazz:  { bpm: 120, scale: "major", osc: "sine" },
+      rap:   { bpm: 92,  scale: "minor", osc: "lead-bass" },
+      soul:  { bpm: 80,  scale: "minor", osc: "triangle" },
+      blues: { bpm: 85,  scale: "blues", osc: "square" },
+      rock:  { bpm: 130, scale: "major", osc: "sawtooth" },
+      folk:  { bpm: 95,  scale: "major", osc: "acoustic" }
+    };
+
+    // 장르별 기본 멜로디/드럼 패턴 (예시용)
+    const GENRE_PATTERNS = {
+      pop: {
+        melody: [
+          { row: 2, step: 0 }, { row: 3, step: 4 }, { row: 4, step: 8 }, { row: 3, step: 12 },
+          { row: 2, step: 16 }, { row: 3, step: 20 }, { row: 4, step: 24 }, { row: 3, step: 28 }
+        ],
+        drums: {
+          kick:  [0, 8, 16, 24],
+          snare: [4, 12, 20, 28],
+          hat:   Array.from({length: steps}, (_, i) => i)
+        }
+      },
+      ballad: {
+        melody: [
+          { row: 5, step: 0 }, { row: 4, step: 4 }, { row: 3, step: 8 }, { row: 4, step: 12 },
+          { row: 5, step: 16 }, { row: 4, step: 20 }, { row: 3, step: 24 }, { row: 4, step: 28 }
+        ],
+        drums: {
+          kick:  [0, 16],
+          snare: [8, 24],
+          hat:   Array.from({length: steps}, (_, i) => (i % 2 === 0 ? i : null)).filter(v => v !== null)
+        }
+      },
+      jazz: {
+        melody: [
+          { row: 1, step: 0 }, { row: 2, step: 2 }, { row: 3, step: 4 }, { row: 4, step: 6 },
+          { row: 2, step: 10 }, { row: 3, step: 12 }, { row: 4, step: 14 },
+          { row: 1, step: 16 }, { row: 2, step: 18 }, { row: 3, step: 20 }, { row: 4, step: 22 },
+          { row: 2, step: 26 }, { row: 3, step: 28 }, { row: 4, step: 30 }
+        ],
+        drums: {
+          kick:  [0, 10, 16, 26],
+          snare: [4, 12, 20, 28],
+          hat:   Array.from({length: steps}, (_, i) => (i % 4 === 0 ? i : null)).filter(v => v !== null)
+        }
+      },
+      rap: {
+        melody: [
+          { row: 4, step: 0 }, { row: 4, step: 4 }, { row: 5, step: 8 }, { row: 4, step: 12 },
+          { row: 4, step: 16 }, { row: 4, step: 20 }, { row: 5, step: 24 }, { row: 4, step: 28 }
+        ],
+        drums: {
+          kick:  [0, 5, 16, 21],
+          snare: [8, 24],
+          hat:   Array.from({length: steps}, (_, i) => (i % 2 === 0 ? i : null)).filter(v => v !== null)
+        }
+      },
+      soul: {
+        melody: [
+          { row: 3, step: 0 }, { row: 2, step: 4 }, { row: 3, step: 8 }, { row: 4, step: 12 },
+          { row: 3, step: 16 }, { row: 2, step: 20 }, { row: 3, step: 24 }, { row: 4, step: 28 }
+        ],
+        drums: {
+          kick:  [0, 10, 16, 26],
+          snare: [4, 12, 20, 28],
+          hat:   Array.from({length: steps}, (_, i) => (i % 4 === 0 ? i : null)).filter(v => v !== null)
+        }
+      },
+      blues: {
+        melody: [
+          { row: 4, step: 0 }, { row: 3, step: 2 }, { row: 2, step: 4 }, { row: 3, step: 6 },
+          { row: 4, step: 8 }, { row: 3, step: 10 }, { row: 2, step: 12 }, { row: 3, step: 14 },
+          { row: 4, step: 16 }, { row: 3, step: 18 }, { row: 2, step: 20 }, { row: 3, step: 22 },
+          { row: 4, step: 24 }, { row: 3, step: 26 }, { row: 2, step: 28 }, { row: 3, step: 30 }
+        ],
+        drums: {
+          kick:  [0, 8, 16, 24],
+          snare: [4, 12, 20, 28],
+          hat:   Array.from({length: steps}, (_, i) => i)
+        }
+      },
+      rock: {
+        melody: [
+          { row: 2, step: 0 }, { row: 2, step: 4 }, { row: 1, step: 8 }, { row: 2, step: 12 },
+          { row: 2, step: 16 }, { row: 2, step: 20 }, { row: 1, step: 24 }, { row: 2, step: 28 }
+        ],
+        drums: {
+          kick:  [0, 8, 16, 24],
+          snare: [4, 12, 20, 28],
+          hat:   Array.from({length: steps}, (_, i) => (i % 2 === 0 ? i : null)).filter(v => v !== null)
+        }
+      },
+      folk: {
+        melody: [
+          { row: 5, step: 0 }, { row: 3, step: 4 }, { row: 4, step: 8 }, { row: 5, step: 12 },
+          { row: 5, step: 16 }, { row: 3, step: 20 }, { row: 4, step: 24 }, { row: 5, step: 28 }
+        ],
+        drums: {
+          kick:  [0, 16],
+          snare: [8, 24],
+          hat:   Array.from({length: steps}, (_, i) => (i % 4 === 0 ? i : null)).filter(v => v !== null)
+        }
+      }
+    };
+
+    // 코드 진행 프리셋 (2마디, 4코드 기준)
+    const PROGRESSION_PRESETS = {
+      pop_1: {
+        label: "I - V - vi - IV",
+        mode: "major",
+        romans: ["I", "V", "vi", "IV"],
+        offsets: [0, 7, 9, 5]
+      },
+      minor_rock: {
+        label: "i - VI - III - VII",
+        mode: "minor",
+        romans: ["i", "VI", "III", "VII"],
+        offsets: [0, 8, 3, 10]
+      },
+      jazz_251: {
+        label: "ii - V - I - I",
+        mode: "major",
+        romans: ["ii", "V", "I", "I"],
+        offsets: [2, 7, 0, 0]
+      },
+      blues_compact: {
+        label: "I - IV - I - V",
+        mode: "blues",
+        romans: ["I", "IV", "I", "V"],
+        offsets: [0, 5, 0, 7]
+      }
+    };
+
+    const ROOT_TO_MIDI = {
+      C: 48, D: 50, E: 52, F: 53, G: 55, A: 57, B: 59
+    };
+    const NOTE_NAME_TABLE = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+    function midiToNoteName(midi) {
+      const octave = Math.floor(midi / 12) - 1;
+      const name = NOTE_NAME_TABLE[midi % 12];
+      return name + octave;
+    }
+
+    function noteNameToMidi(name) {
+      const m = name.match(/^([A-G]#?)(-?\d)$/);
+      if (!m) return 60;
+      const letter = m[1];
+      const octave = parseInt(m[2], 10);
+      const index = NOTE_NAME_TABLE.indexOf(letter);
+      if (index < 0) return 60;
+      return (octave + 1) * 12 + index;
+    }
+
+    function buildScale(rootMidi, type) {
+      let intervals;
+      switch (type) {
+        case "major":
+          intervals = [0,2,4,5,7,9,11,12];
+          break;
+        case "minor":
+          intervals = [0,2,3,5,7,8,10,12];
+          break;
+        case "blues":
+          // 블루스 스케일(6음) 확장형
+          intervals = [0,3,5,6,7,10,12,15];
+          break;
+        default:
+          intervals = [0,2,3,5,7,9,10,12];
+      }
+      return intervals.map(i => rootMidi + i);
+    }
+
+    function buildTriad(rootMidi, quality) {
+      let intervals;
+      if (quality === "maj") intervals = [0,4,7];
+      else if (quality === "min") intervals = [0,3,7];
+      else intervals = [0,3,6];
+      return intervals.map(i => midiToNoteName(rootMidi + i));
+    }
+
+    function romanToQuality(roman) {
+      if (roman.includes("°")) return "dim";
+      const first = roman[0];
+      if (first === first.toLowerCase()) return "min";
+      return "maj";
+    }
+
+    let currentRoot = "A";
+    let currentScaleType = "minor";
+    let currentRootMidi = ROOT_TO_MIDI[currentRoot];
+    let noteNames = [];
+    let bassNoteNames = [];
+    let currentProgressionId = "none";
+
+    function computeScale() {
+      currentRootMidi = ROOT_TO_MIDI[currentRoot] ?? 57;
+      // 수정: Blues 포함해서 실제 선택한 스케일 그대로 사용
+      const baseType = currentScaleType;
+      const scaleForNames = buildScale(currentRootMidi, baseType);
+      noteNames = scaleForNames.map(midiToNoteName).reverse();
+
+      if (noteNames.length > NUM_MELODY_ROWS) {
+        noteNames = noteNames.slice(0, NUM_MELODY_ROWS);
+      } else {
+        while (noteNames.length < NUM_MELODY_ROWS) {
+          noteNames.unshift(noteNames[0]);
+        }
+      }
+
+      bassNoteNames = noteNames.map(n =>
+        midiToNoteName(noteNameToMidi(n) - 12)
+      );
+    }
+
+
+// KEY 자리 다시 수정
+
+function renderScaleLabels() {
+  // 멜로디: step-header(스텝 번호 줄)는 제외하고, 실제 음 줄만 선택
+  const mLabels = document.querySelectorAll(
+    "#melody-grid .row:not(.step-header) .row-label"
+  );
+  mLabels.forEach((label, idx) => {
+    label.textContent = noteNames[idx] || "";
+  });
+
+  // 베이스도 동일하게 헤더 제외
+  const bLabels = document.querySelectorAll(
+    "#bass-grid .row:not(.step-header) .row-label"
+  );
+  bLabels.forEach((label, idx) => {
+    label.textContent = "Bass " + (bassNoteNames[idx] || "");
+  });
+
+  const scaleDisplay = document.getElementById("scale-display");
+  const scaleName =
+    currentScaleType === "major" ? "Major"
+    : currentScaleType === "minor" ? "Minor"
+    : "Blues";
+  scaleDisplay.textContent = `현재 키: ${currentRoot} ${scaleName}`;
+}
+
+
+
+
+
+
+
+
+    function renderHarmonyInfo() {
+      const box = document.getElementById("harmony-info");
+      const scaleName =
+        currentScaleType === "major" ? "Major"
+        : currentScaleType === "minor" ? "Minor"
+        : "Blues";
+
+      let text = `Key: ${currentRoot} ${scaleName}\n\n`;
+
+      if (currentScaleType === "major") {
+        const I  = buildTriad(currentRootMidi, "maj");
+        const IV = buildTriad(currentRootMidi + 5, "maj");
+        const V  = buildTriad(currentRootMidi + 7, "maj");
+        const vi = buildTriad(currentRootMidi + 9, "min");
+
+        text += "● 대표 코드 (Major)\n";
+        text += `I  : ${I.join("-")}\n`;
+        text += `IV : ${IV.join("-")}\n`;
+        text += `V  : ${V.join("-")}\n`;
+        text += `vi : ${vi.join("-")}\n\n`;
+        text += "● 자주 쓰는 진행\n";
+        text += "1) I - V - vi - IV   (팝/록)\n";
+        text += "2) I - IV - V        (기본)\n";
+      } else if (currentScaleType === "minor") {
+        const i   = buildTriad(currentRootMidi, "min");
+        const iv  = buildTriad(currentRootMidi + 5, "min");
+        const v   = buildTriad(currentRootMidi + 7, "min");
+        const VI  = buildTriad(currentRootMidi + 8, "maj");
+        const VII = buildTriad(currentRootMidi + 10, "maj");
+
+        text += "● 대표 코드 (Minor)\n";
+        text += `i   : ${i.join("-")}\n`;
+        text += `iv  : ${iv.join("-")}\n`;
+        text += `v   : ${v.join("-")}\n`;
+        text += `VI  : ${VI.join("-")}\n`;
+        text += `VII : ${VII.join("-")}\n\n`;
+        text += "● 자주 쓰는 진행\n";
+        text += "1) i - VI - III - VII (록/발라드)\n";
+        text += "2) i - iv - v         (기본)\n";
+      } else {
+        const I  = buildTriad(currentRootMidi, "maj");
+        const IV = buildTriad(currentRootMidi + 5, "maj");
+        const V  = buildTriad(currentRootMidi + 7, "maj");
+
+        text += "● 대표 코드 (Blues 기본)\n";
+        text += `I7 : ${I.join("-")} + b7\n`;
+        text += `IV7: ${IV.join("-")} + b7\n`;
+        text += `V7 : ${V.join("-")} + b7\n\n`;
+        text += "● 전형적인 12마디 블루스 구조 예\n";
+        text += "I | I | I | I\nIV | IV | I | I\nV | IV | I | V\n";
+      }
+
+      if (currentProgressionId !== "none") {
+        const prog = PROGRESSION_PRESETS[currentProgressionId];
+        if (prog) {
+          text += "\n● 선택된 코드 진행 (2마디 기준)\n";
+          text += prog.romans.join(" | ") + "\n";
+        }
+      }
+
+      box.textContent = text;
+    }
+
+    function updateTheoryUI() {
+      renderScaleLabels();
+      renderHarmonyInfo();
+    }
+
+    // ===== 그리드 생성 =====
+    const melodyGridEl = document.getElementById("melody-grid");
+    const bassGridEl   = document.getElementById("bass-grid");
+    const drumGridEl   = document.getElementById("drum-grid");
+    const drumTracks = [
+      { id: "kick",  label: "Kick" },
+      { id: "snare", label: "Snare" },
+      { id: "hat",   label: "Hi-Hat" }
+    ];
+
+    computeScale();
+
+    function createMelodyGrid() {
+
+
+
+createStepHeader(melodyGridEl);
+
+
+
+      for (let rowIdx = 0; rowIdx < NUM_MELODY_ROWS; rowIdx++) {
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const label = document.createElement("div");
+        label.className = "row-label";
+        label.textContent = noteNames[rowIdx] || "";
+        row.appendChild(label);
+
+        const cellRow = document.createElement("div");
+        cellRow.className = "cell-row";
+
+        for (let step = 0; step < steps; step++) {
+          const cell = document.createElement("div");
+          cell.className = "cell melody";
+          cell.dataset.step = step;
+          cell.dataset.row = rowIdx;
+          cell.addEventListener("click", () => {
+            cell.classList.toggle("active");
+          });
+          cellRow.appendChild(cell);
+        }
+
+        row.appendChild(cellRow);
+        melodyGridEl.appendChild(row);
+      }
+    }
+
+    function createBassGrid() {
+
+
+createStepHeader(bassGridEl);
+
+
+      for (let rowIdx = 0; rowIdx < NUM_MELODY_ROWS; rowIdx++) {
+        const row = document.createElement("div");
+        row.className = "row bass-row";
+
+        const label = document.createElement("div");
+        label.className = "row-label";
+        label.textContent = "Bass " + (bassNoteNames[rowIdx] || "");
+        row.appendChild(label);
+
+        const cellRow = document.createElement("div");
+        cellRow.className = "cell-row";
+
+        for (let step = 0; step < steps; step++) {
+          const cell = document.createElement("div");
+          cell.className = "cell bass";
+          cell.dataset.step = step;
+          cell.dataset.row = rowIdx;
+          cell.addEventListener("click", () => {
+            cell.classList.toggle("active");
+          });
+          cellRow.appendChild(cell);
+        }
+
+        row.appendChild(cellRow);
+        bassGridEl.appendChild(row);
+      }
+    }
+
+    function createDrumGrid() {
+
+
+createStepHeader(drumGridEl);
+
+
+
+      drumTracks.forEach((track) => {
+        const row = document.createElement("div");
+        row.className = "row drum-row";
+
+        const label = document.createElement("div");
+        label.className = "row-label";
+        label.textContent = track.label;
+        row.appendChild(label);
+
+        const cellRow = document.createElement("div");
+        cellRow.className = "cell-row";
+
+        for (let step = 0; step < steps; step++) {
+          const cell = document.createElement("div");
+          cell.className = `cell drum drum-${track.id}`;
+          cell.dataset.step = step;
+          cell.dataset.track = track.id;
+          cell.addEventListener("click", () => {
+            cell.classList.toggle("active");
+          });
+          cellRow.appendChild(cell);
+        }
+
+        row.appendChild(cellRow);
+        drumGridEl.appendChild(row);
+      });
+    }
+
+    createMelodyGrid();
+    createBassGrid();
+    createDrumGrid();
+    updateTheoryUI();
+
+
+
+
+
+
+// 32스텝 번호 헤더를 만들어 주는 함수
+function createStepHeader(gridEl) {
+  const header = document.createElement("div");
+  header.className = "row step-header";
+
+  const label = document.createElement("div");
+  label.className = "row-label";
+  label.textContent = ""; // 왼쪽 여백용
+  header.appendChild(label);
+
+  const numbersRow = document.createElement("div");
+  numbersRow.className = "cell-row";
+
+  for (let s = 0; s < steps; s++) {
+    const num = document.createElement("div");
+    num.className = "step-number";
+    num.textContent = s + 1; // 1~32
+    numbersRow.appendChild(num);
+  }
+
+  header.appendChild(numbersRow);
+  gridEl.appendChild(header);
+}
+
+
+
+
+
+
+
+
+
+    // ===== 오디오 라우팅 (볼륨 버스) =====
+    const masterVol = new Tone.Volume(-6).toDestination();
+    const melodyBus = new Tone.Volume(0).connect(masterVol);
+    const bassBus   = new Tone.Volume(-4).connect(masterVol);
+    const drumBus   = new Tone.Volume(-2).connect(masterVol);
+
+    const reverb = new Tone.Reverb({ decay: 4, wet: 0.35 }).connect(melodyBus);
+
+    function createMelodySynth(kind) {
+      let synth;
+      switch (kind) {
+        case "sine":
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.02, decay: 0.5, sustain: 0.6, release: 2 }
+          }).connect(reverb);
+          break;
+        case "sawtooth":
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sawtooth" },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.5, release: 1.2 }
+          }).connect(reverb);
+          break;
+        case "square":
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "square" },
+            envelope: { attack: 0.01, decay: 0.25, sustain: 0.4, release: 0.8 }
+          }).connect(reverb);
+          break;
+        case "acoustic": // 어쿠스틱 기타 느낌
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.001, decay: 0.35, sustain: 0.0, release: 0.8 }
+          }).connect(reverb);
+          break;
+        case "lead-bass":
+          // 수정: 베이스 버스가 아니라 멜로디 라인 쪽으로 보내기
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "square" },
+            filter: { type: "lowpass", Q: 1, rolloff: -24 },
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.4 }
+          }).connect(reverb);
+          break;
+        case "triangle":
+        default:
+          synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 1.8 }
+          }).connect(reverb);
+      }
+      return synth;
+    }
+
+    let currentInstrumentKind = "triangle";
+    let melodySynth = createMelodySynth(currentInstrumentKind);
+
+    const bassTrackSynth = new Tone.MonoSynth({
+      oscillator: { type: "square" },
+      filter: { type: "lowpass", Q: 1, rolloff: -24 },
+      envelope: { attack: 0.01, decay: 0.25, sustain: 0.7, release: 0.3 }
+    }).connect(bassBus);
+
+    const kick = new Tone.MembraneSynth({
+      pitchDecay: 0.02,
+      octaves: 6,
+      envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.1 }
+    }).connect(drumBus);
+
+    const snareNoise = new Tone.NoiseSynth({
+      noise: { type: "white" },
+      envelope: { attack: 0.001, decay: 0.25, sustain: 0 }
+    });
+    const snareFilter = new Tone.Filter(1800, "bandpass").connect(drumBus);
+    snareNoise.connect(snareFilter);
+
+    const hat = new Tone.MetalSynth({
+      frequency: 200,
+      envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+      harmonicity: 5.1,
+      modulationIndex: 32,
+      resonance: 4000,
+      octaves: 1.5
+    }).connect(drumBus);
+
+    // ===== 시퀀서 루프 =====
+    let currentStep = 0;
+
+    function setPlayhead(step) {
+      const cells = document.querySelectorAll(".cell");
+      cells.forEach((c) => {
+        const s = Number(c.dataset.step);
+        c.classList.toggle("playing", s === step);
+      });
+    }
+
+    function findNearestRow(noteName, list) {
+      const targetMidi = noteNameToMidi(noteName);
+      let bestRow = 0;
+      let bestDiff = Infinity;
+      list.forEach((n, idx) => {
+        const diff = Math.abs(noteNameToMidi(n) - targetMidi);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestRow = idx;
+        }
+      });
+      return bestRow;
+    }
+
+    const loop = new Tone.Loop((time) => {
+      setPlayhead(currentStep);
+
+      const activeMelodyCells = document.querySelectorAll(
+        `.cell.melody.active[data-step="${currentStep}"]`
+      );
+      activeMelodyCells.forEach((cell) => {
+        const row = Number(cell.dataset.row);
+        const note = noteNames[row];
+        melodySynth.triggerAttackRelease(note, "16n", time);
+      });
+
+      const activeBassCells = document.querySelectorAll(
+        `.cell.bass.active[data-step="${currentStep}"]`
+      );
+      activeBassCells.forEach((cell) => {
+        const row = Number(cell.dataset.row);
+        const note = bassNoteNames[row];
+        bassTrackSynth.triggerAttackRelease(note, "16n", time);
+      });
+
+      drumTracks.forEach((track) => {
+        const cell = document.querySelector(
+          `.cell.drum-${track.id}[data-step="${currentStep}"]`
+        );
+        if (cell && cell.classList.contains("active")) {
+          if (track.id === "kick") {
+            kick.triggerAttackRelease("C2", "16n", time);
+          } else if (track.id === "snare") {
+            snareNoise.triggerAttackRelease("8n", time);
+          } else if (track.id === "hat") {
+            hat.triggerAttackRelease("32n", time);
+          }
+        }
+      });
+
+      currentStep = (currentStep + 1) % steps;
+    }, "16n");
+
+    // ===== 컨트롤 UI =====
+    const playBtn = document.getElementById("play-btn");
+    const bpmSlider = document.getElementById("bpm");
+    const bpmValue = document.getElementById("bpm-value");
+    const genreSelect = document.getElementById("genre-select");
+    const keyRootSelect = document.getElementById("key-root");
+    const scaleTypeSelect = document.getElementById("scale-type");
+    const instSelect = document.getElementById("instrument-select");
+    const progressionSelect = document.getElementById("progression-select");
+    const applyProgBtn = document.getElementById("apply-prog-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const saveBtn = document.getElementById("save-btn");
+    const loadBtn = document.getElementById("load-btn");
+
+    const volMaster = document.getElementById("vol-master");
+    const volMelody = document.getElementById("vol-melody");
+    const volBass   = document.getElementById("vol-bass");
+    const volDrum   = document.getElementById("vol-drum");
+
+    Tone.Transport.bpm.value = Number(bpmSlider.value);
+
+    bpmSlider.addEventListener("input", () => {
+      const val = Number(bpmSlider.value);
+      bpmValue.textContent = val;
+      Tone.Transport.bpm.rampTo(val, 0.1);
+    });
+
+    keyRootSelect.addEventListener("change", () => {
+      currentRoot = keyRootSelect.value;
+      computeScale();
+      updateTheoryUI();
+    });
+
+    scaleTypeSelect.addEventListener("change", () => {
+      currentScaleType = scaleTypeSelect.value;
+      computeScale();
+      updateTheoryUI();
+    });
+
+    instSelect.addEventListener("change", () => {
+      const oscType = instSelect.value;
+      currentInstrumentKind = oscType;
+      melodySynth.dispose();
+      melodySynth = createMelodySynth(oscType);
+    });
+
+    progressionSelect.addEventListener("change", () => {
+      currentProgressionId = progressionSelect.value;
+      renderHarmonyInfo();
+    });
+
+    // 볼륨 슬라이더 → dB
+    function applyVolumesFromUI() {
+      masterVol.volume.value = Number(volMaster.value);
+      melodyBus.volume.value = Number(volMelody.value);
+      bassBus.volume.value   = Number(volBass.value);
+      drumBus.volume.value   = Number(volDrum.value);
+    }
+    applyVolumesFromUI();
+
+    [volMaster, volMelody, volBass, volDrum].forEach(sl => {
+      sl.addEventListener("input", applyVolumesFromUI);
+    });
+
+    function clearPattern() {
+      document.querySelectorAll(".cell.active").forEach((c) => {
+        c.classList.remove("active");
+      });
+    }
+
+    function applyGenrePattern(genre) {
+      const pat = GENRE_PATTERNS[genre];
+      if (!pat) return;
+
+      if (pat.melody) {
+        pat.melody.forEach(({ row, step }) => {
+          const cell = document.querySelector(
+            `.cell.melody[data-row="${row}"][data-step="${step}"]`
+          );
+          if (cell) cell.classList.add("active");
+        });
+      }
+      if (pat.drums) {
+        ["kick", "snare", "hat"].forEach((trackId) => {
+          const arr = pat.drums[trackId] || [];
+          arr.forEach((step) => {
+            const cell = document.querySelector(
+              `.cell.drum-${trackId}[data-step="${step}"]`
+            );
+            if (cell) cell.classList.add("active");
+          });
+        });
+      }
+    }
+
+    function applyGenre(genre, withPattern) {
+      const preset = GENRE_PRESETS[genre];
+      if (!preset) return;
+
+      bpmSlider.value = preset.bpm;
+      bpmValue.textContent = preset.bpm;
+      Tone.Transport.bpm.rampTo(preset.bpm, 0.1);
+
+      currentScaleType = preset.scale;
+      scaleTypeSelect.value = preset.scale;
+      computeScale();
+      updateTheoryUI();
+
+      instSelect.value = preset.osc;
+      currentInstrumentKind = preset.osc;
+      melodySynth.dispose();
+      melodySynth = createMelodySynth(preset.osc);
+
+      clearPattern();
+      if (withPattern) {
+        applyGenrePattern(genre);
+      }
+    }
+
+    genreSelect.addEventListener("change", () => {
+      applyGenre(genreSelect.value, true);
+    });
+
+    applyProgBtn.addEventListener("click", () => {
+      const id = progressionSelect.value;
+      currentProgressionId = id;
+      if (id === "none") {
+        renderHarmonyInfo();
+        return;
+      }
+      const prog = PROGRESSION_PRESETS[id];
+      if (!prog) return;
+
+      currentScaleType = prog.mode === "blues" ? "blues" : prog.mode;
+      scaleTypeSelect.value = currentScaleType;
+      computeScale();
+      updateTheoryUI();
+
+      document.querySelectorAll(".cell.melody.active, .cell.bass.active").forEach(c => {
+        c.classList.remove("active");
+      });
+
+      // 2마디(32스텝)를 4코드로 나눔: 코드당 8스텝
+      for (let i = 0; i < 4; i++) {
+        const rootMidi = currentRootMidi + prog.offsets[i];
+        const roman    = prog.romans[i];
+        const quality  = romanToQuality(roman);
+        const triad    = buildTriad(rootMidi, quality === "dim" ? "min" : quality);
+        const startStep = i * 8;
+
+        const bassRoot = midiToNoteName(rootMidi - 12);
+        const bassRow  = findNearestRow(bassRoot, bassNoteNames);
+        [startStep, startStep + 4].forEach(step => {
+          const cell = document.querySelector(
+            `.cell.bass[data-row="${bassRow}"][data-step="${step}"]`
+          );
+          if (cell) cell.classList.add("active");
+        });
+
+        triad.slice(0,3).forEach((noteName, idx) => {
+          const mRow = findNearestRow(noteName, noteNames);
+          const mStep = startStep + idx * 2;
+          const cell = document.querySelector(
+            `.cell.melody[data-row="${mRow}"][data-step="${mStep}"]`
+          );
+          if (cell) cell.classList.add("active");
+        });
+      }
+
+      renderHarmonyInfo();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      clearPattern();
+    });
+
+    const STORAGE_KEY = "beatSequencerStateFinal";
+
+    function saveState() {
+      const state = {
+        bpm: Number(bpmSlider.value),
+        genre: genreSelect.value,
+        keyRoot: keyRootSelect.value,
+        scaleType: scaleTypeSelect.value,
+        instrument: instSelect.value,
+        progression: progressionSelect.value,
+        volumes: {
+          master: Number(volMaster.value),
+          melody: Number(volMelody.value),
+          bass:   Number(volBass.value),
+          drum:   Number(volDrum.value)
+        },
+        melody: [],
+        bass: [],
+        drums: { kick: [], snare: [], hat: [] }
+      };
+
+      document.querySelectorAll(".cell.melody.active").forEach((cell) => {
+        state.melody.push({
+          row: Number(cell.dataset.row),
+          step: Number(cell.dataset.step)
+        });
+      });
+
+      document.querySelectorAll(".cell.bass.active").forEach((cell) => {
+        state.bass.push({
+          row: Number(cell.dataset.row),
+          step: Number(cell.dataset.step)
+        });
+      });
+
+      ["kick", "snare", "hat"].forEach((trackId) => {
+        document
+          .querySelectorAll(`.cell.drum-${trackId}.active`)
+          .forEach((cell) => {
+            state.drums[trackId].push(Number(cell.dataset.step));
+          });
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      alert("현재 패턴을 저장했습니다.");
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        alert("저장된 패턴이 없습니다.");
+        return;
+      }
+      const state = JSON.parse(raw);
+
+      bpmSlider.value = state.bpm;
+      bpmValue.textContent = state.bpm;
+      Tone.Transport.bpm.value = state.bpm;
+
+      keyRootSelect.value = state.keyRoot;
+      currentRoot = state.keyRoot;
+
+      scaleTypeSelect.value = state.scaleType;
+      currentScaleType = state.scaleType;
+      computeScale();
+      updateTheoryUI();
+
+      genreSelect.value = state.genre;
+
+      instSelect.value = state.instrument;
+      currentInstrumentKind = state.instrument;
+      melodySynth.dispose();
+      melodySynth = createMelodySynth(state.instrument);
+
+      progressionSelect.value = state.progression || "none";
+      currentProgressionId = progressionSelect.value;
+
+      if (state.volumes) {
+        volMaster.value = state.volumes.master;
+        volMelody.value = state.volumes.melody;
+        volBass.value   = state.volumes.bass;
+        volDrum.value   = state.volumes.drum;
+        applyVolumesFromUI();
+      }
+
+      clearPattern();
+
+      state.melody.forEach(({ row, step }) => {
+        const cell = document.querySelector(
+          `.cell.melody[data-row="${row}"][data-step="${step}"]`
+        );
+        if (cell) cell.classList.add("active");
+      });
+
+      (state.bass || []).forEach(({ row, step }) => {
+        const cell = document.querySelector(
+          `.cell.bass[data-row="${row}"][data-step="${step}"]`
+        );
+        if (cell) cell.classList.add("active");
+      });
+
+      ["kick", "snare", "hat"].forEach((trackId) => {
+        (state.drums[trackId] || []).forEach((step) => {
+          const cell = document.querySelector(
+            `.cell.drum-${trackId}[data-step="${step}"]`
+          );
+          if (cell) cell.classList.add("active");
+        });
+      });
+
+      renderHarmonyInfo();
+      alert("저장된 패턴을 불러왔습니다.");
+    }
+
+    saveBtn.addEventListener("click", saveState);
+    loadBtn.addEventListener("click", loadState);
+
+    let isPlaying = false;
+
+    playBtn.addEventListener("click", async () => {
+      if (!isPlaying) {
+        await Tone.start();
+        if (!loop.state || loop.state !== "started") {
+          loop.start(0);
+        }
+        Tone.Transport.start("+0.05");
+        isPlaying = true;
+        playBtn.textContent = "■ Stop";
+      } else {
+        Tone.Transport.stop();
+        currentStep = 0;
+        setPlayhead(-1);
+        isPlaying = false;
+        playBtn.textContent = "▶ Play";
+      }
+    });
+  </script>
+</body>
+</html>
