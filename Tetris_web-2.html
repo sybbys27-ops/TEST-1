@@ -180,12 +180,12 @@
             updateScore();
         }
 
-        // # [난이도 시스템] 200점마다 속도를 10%씩 증가시킴
+        // # [난이도 시스템] 200점마다 속도를 20%씩 증가시킴
         function checkLevelUp() {
             let newLevel = Math.floor(player.score / 200) + 1; // # 200으로 나눈 몫이 레벨
             if (newLevel > player.level) {
                 player.level = newLevel;
-                // # 속도 공식: 기존 속도의 90% (0.9 곱하기)
+                // # 속도 공식: 기존 속도의 80% (0.8 곱하기)
                 dropInterval = initialSpeed * Math.pow(0.8, player.level - 1);
             }
         }
@@ -310,6 +310,17 @@
             document.getElementById('score').innerText = player.score;
             document.getElementById('level').innerText = player.level;
         }
+
+        // # 키보드 입력 감지 이벤트 리스너
+        window.addEventListener('keydown', event => {
+           if (event.key === 'Enter') {
+                const startBtn = document. getElementByld('start-btn');
+                if (startBtn.style.display !== 'none') {
+                    startGame();
+                }   
+            }
+        });
+
 
         // # 게임 시작 버튼 클릭 시 실행
         function startGame() {
