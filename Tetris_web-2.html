@@ -180,13 +180,13 @@
             updateScore();
         }
 
-        // # [난이도 시스템] 250점마다 속도를 10%씩 증가시킴
+        // # [난이도 시스템] 150점마다 속도를 20%씩 증가시킴
         function checkLevelUp() {
-            let newLevel = Math.floor(player.score / 150) + 1; // # 250으로 나눈 몫이 레벨
+            let newLevel = Math.floor(player.score / 150) + 1; // # 150으로 나눈 몫이 레벨
             if (newLevel > player.level) {
                 player.level = newLevel;
-                // # 속도 공식: 기존 속도의 90% (0.9 곱하기)
-                dropInterval = initialSpeed * Math.pow(0.9, player.level - 1);
+                // # 속도 공식: 기존 속도의 80% (0.8 곱하기)
+                dropInterval = initialSpeed * Math.pow(0.8, player.level - 1);
             }
         }
 
@@ -310,6 +310,22 @@
             document.getElementById('score').innerText = player.score;
             document.getElementById('level').innerText = player.level;
         }
+
+        document.addEventListener("keydown", (e) => {
+  // IME 조합 입력 중이면 무시(한글 입력 중 오동작 방지)
+            if (e.isComposing) return;
+            if (e.key === "Enter" || e.code === "Enter") {
+                e.preventDefault();
+                const startBtn = document.getElementById("start-btn");
+                if (!startBtn) return;
+
+    // 버튼이 화면에 있을 때만 시작(원하면 조건 제거 가능)
+            if (startBtn.offsetParent !== null) {
+                startBtn.click(); // 클릭과 동일한 경로로 시작
+                }
+            }
+        });
+
 
         // # 게임 시작 버튼 클릭 시 실행
         function startGame() {
